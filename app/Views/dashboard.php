@@ -2,7 +2,6 @@
 $title = 'Dashboard | AuthBoard';
 ob_start();
 ?>
-
 <div class="bg-slate-200 rounded-lg p-4 md:p-6 mb-4 md:mb-6">
     <h2 class="text-xl md:text-3xl font-bold">Welcome, <?= htmlspecialchars($user['name']) ?>!</h2>
     <p class="text-xs md:text-sm opacity-90 py-3">Your email: <?= htmlspecialchars($user['email']) ?></p>

@@ -39,6 +39,7 @@ class Post {
 
     // Fetch all posts by a specific user (optional)
     public static function getByUser(int $userId): array {
+        
         $stmt = self::connect()->prepare('
             SELECT posts.*, users.name 
             FROM posts 
@@ -49,10 +50,78 @@ class Post {
         $stmt->execute([$userId]);
         return $stmt->fetchAll();
     }
+    
+    // Fetch a single post by id
+    /**
+     * @param int $postId
+     * @return array|null
+     */
+    public static function getById(int $postId): ?array {
+    $stmt = self::connect()->prepare('SELECT * FROM posts WHERE id = :id');
+        $id = (int)$postId;
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
 
     // Delete a post by its ID (optional feature)
+    /**
+     * @param int $postId
+     * @param int $userId
+     * @return bool
+     */
     public static function delete(int $postId, int $userId): bool {
-        $stmt = self::connect()->prepare('DELETE FROM posts WHERE id = ? AND user_id = ?');
-        return $stmt->execute([$postId, $userId]);
+        try {
+            // Verify post exists and belongs to user
+            $post = self::getById($postId);
+            if (!$post || (int)$post['user_id'] !== (int)$userId) {
+                return false;
+            }
+
+            // If there's an image, remove file from uploads directory
+            if (!empty($post['image'])) {
+                $uploadPath = __DIR__ . '/../../public/uploads/' . $post['image'];
+                if (file_exists($uploadPath)) {
+                    @unlink($uploadPath);
+                }
+            }
+
+            $stmt = self::connect()->prepare('DELETE FROM posts WHERE id = :id AND user_id = :uid');
+            $stmt->bindValue(':id', (int)$postId, PDO::PARAM_INT);
+            $stmt->bindValue(':uid', (int)$userId, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (\Throwable $e) {
+            error_log('Post::delete error: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    // Update a post's content (only by owner)
+    public static function update(int $postId, int $userId, string $content): bool {
+        $stmt = self::connect()->prepare('UPDATE posts SET content = :content WHERE id = :id AND user_id = :uid');
+        $stmt->bindValue(':content', $content, PDO::PARAM_STR);
+        $stmt->bindValue(':id', (int)$postId, PDO::PARAM_INT);
+        $stmt->bindValue(':uid', (int)$userId, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+    // for editing the post 
+    public static function edit(int $postId, int $userId, string $newContent): bool {
+        try {
+            // Verify post exists and belongs to user
+            $post = self::getById($postId);
+            if (!$post || (int)$post['user_id'] !== (int)$userId) {
+                return false;
+            }
+
+            $stmt = self::connect()->prepare('UPDATE posts SET content = :content WHERE id = :id AND user_id = :uid');
+            $stmt->bindValue(':content', $newContent, PDO::PARAM_STR);
+            $stmt->bindValue(':id', (int)$postId, PDO::PARAM_INT);
+            $stmt->bindValue(':uid', (int)$userId, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (\Throwable $e) {
+            error_log('Post::edit error: ' . $e->getMessage());
+            return false;
+        }
     }
 }

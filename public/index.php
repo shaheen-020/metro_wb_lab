@@ -45,6 +45,9 @@ $router->get('/dashboard', fn() => $dash->index());
 // ---- Post Routes ----
 $router->get('/post/create', fn() => $post->create());  // shows create_post.php
 $router->post('/post/create', fn() => $post->create()); // handles form submission
-
+// Delete post
+$router->post('/post/delete', fn() => $post->delete());
+// edit post
+$router->post('/post/edit', fn() => $post->edit());
 // ---- Dispatch ----
 $router->dispatch($_SERVER['REQUEST_URI'] ?? '/', $_SERVER['REQUEST_METHOD'] ?? 'GET');

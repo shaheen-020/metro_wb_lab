@@ -52,4 +52,104 @@ class PostController extends Controller {
         // Show form
         $this->view('create_post.php', ['user' => $user]);
     }
+
+    // Handle post deletion (only owner may delete)
+    public function delete(): void
+    {
+        $user = Session::get('user');
+        if (!$user) {
+            header('Location: /login');
+            exit;
+        }
+
+        // Only accept POST requests for deletion
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /dashboard');
+            exit;
+        }
+
+        $postId = isset($_POST['post_id']) ? (int)$_POST['post_id'] : 0;
+        if ($postId <= 0) {
+            header('Location: /dashboard');
+            exit;
+        }
+
+        // Verify post exists and belongs to user
+        $target = Post::getById($postId);
+        if (!$target || (int)$target['user_id'] !== (int)$user['id']) {
+            // not found or not owner
+            header('Location: /dashboard');
+            exit;
+        }
+
+        // Delete via model (model will verify ownership and remove image file)
+        $deleted = Post::delete($postId, $user['id']);
+        if (!$deleted) {
+            // Log for debugging and set a flash message
+            error_log("Failed to delete post id={$postId} for user id={$user['id']}");
+            Session::set('flash', ['type' => 'error', 'message' => 'Could not delete the post.']);
+            // Add debug payload (printed to browser console via layout)
+            Session::set('debug', [
+                'where' => 'delete_failed',
+                'postId' => $postId,
+                'userId' => $user['id'],
+                'target' => $target,
+            ]);
+        } else {
+            Session::set('flash', ['type' => 'success', 'message' => 'Post deleted.']);
+            Session::set('debug', [
+                'where' => 'delete_ok',
+                'postId' => $postId,
+                'userId' => $user['id'],
+            ]);
+        }
+
+        // Redirect back to dashboard
+        header('Location: /dashboard');
+        exit;
+    }
+
+    // Handle post edit (only owner may edit content)
+    public function edit(): void
+    {
+        $user = Session::get('user');
+        if (!$user) {
+            header('Location: /login');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /dashboard');
+            exit;
+        }
+
+        $postId = isset($_POST['post_id']) ? (int)$_POST['post_id'] : 0;
+        $content = isset($_POST['content']) ? trim($_POST['content']) : '';
+
+        if ($postId <= 0 || $content === '') {
+            Session::set('flash', ['type' => 'error', 'message' => 'Invalid post or content.']);
+            header('Location: /dashboard');
+            exit;
+        }
+
+        // Verify ownership
+        $target = Post::getById($postId);
+        if (!$target || (int)$target['user_id'] !== (int)$user['id']) {
+            Session::set('flash', ['type' => 'error', 'message' => 'Not authorized to edit this post.']);
+            header('Location: /dashboard');
+            exit;
+        }
+
+        $ok = Post::update($postId, $user['id'], $content);
+        if ($ok) {
+            Session::set('flash', ['type' => 'success', 'message' => 'Post updated.']);
+            Session::set('debug', ['where' => 'edit_ok', 'postId' => $postId]);
+        } else {
+            Session::set('flash', ['type' => 'error', 'message' => 'Could not update post.']);
+            Session::set('debug', ['where' => 'edit_failed', 'postId' => $postId]);
+        }
+
+        header('Location: /dashboard');
+        exit;
+    }
 }

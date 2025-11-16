@@ -13,44 +13,67 @@
         body {
             font-family: 'Inter', sans-serif;
         }
-
         .post-card {
-            background: white;
+            background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
             padding: 1rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             border-radius: 0.75rem;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 6px 18px rgba(12, 15, 25, 0.06);
+            border: 1px solid rgba(15, 23, 42, 0.04);
         }
     </style>
 </head>
 
-<body class="min-h-screen bg-gray-100 flex flex-col items-center p-4 md:p-6 lg:p-8">
+<body class="min-h-screen bg-gradient-to-br from-gray-50 via-sky-50 to-indigo-50 text-gray-800 flex flex-col items-center p-4 md:p-6 lg:p-8">
 
-    <!-- Header -->
-    <header class="w-full max-w-7xl mb-6 md:mb-8 pt-4 md:pt-6 px-4 bg-purple">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 md:gap-6">
-            <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-black">AuthBoard</h1>
+    <!-- Navbar -->
+    <header class="w-full bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 md:px-6">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-2xl font-bold text-indigo-600">AuthBoard</a>
+                </div>
 
-            <?php if (!empty($_SESSION['user'])): ?>
-                <nav class="flex items-center gap-3 md:gap-4 flex-wrap">
-                    <a href="/dashboard" class="text-black font-semibold hover:underline text-sm md:text-base transition">Dashboard</a>
-                    <button
-                        class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 md:py-2 md:px-6 rounded-md text-sm md:text-base transition"
-                        onclick="window.location.href='/logout'">
-                        Logout
+                <!-- Desktop links -->
+                <div class="hidden md:flex md:items-center md:space-x-4">
+                    <?php if (!empty($_SESSION['user'])): ?>
+                        <a href="/dashboard" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-bold">Dashboard</a>
+                        <a href="/bookmarks" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-bold">My Bookmarks</a>
+                        <a href="/activity" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-bold">My Activity</a>
+                        <button onclick="window.location.href='/logout'" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-bold text-center">Logout</button>
+                    <?php else: ?>
+                        <a href="/login" class="text-indigo-600 hover:underline px-3 py-2 rounded-md text-sm font-medium">Login</a>
+                        <a href="/register" class="text-indigo-600 hover:underline px-3 py-2 rounded-md text-sm font-medium">Register</a>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button id="mobileMenuBtn" aria-expanded="false" aria-controls="mobileMenu" class="p-2 rounded-md text-gray-700 hover:bg-gray-100">
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
                     </button>
-                </nav>
-            <?php else: ?>
-                <nav class="flex gap-3 md:gap-4 flex-wrap">
-                    <a href="/login" class="text-blue-600 font-semibold hover:underline text-sm md:text-base transition">Login</a>
-                    <a href="/register" class="text-blue-600 font-semibold hover:underline text-sm md:text-base transition">Register</a>
-                </nav>
-            <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Mobile menu -->
+            <div id="mobileMenu" class="md:hidden hidden pb-4">
+                <?php if (!empty($_SESSION['user'])): ?>
+                    <a href="/dashboard" class="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md">Dashboard</a>
+                    <a href="/bookmarks" class="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md">My Bookmarks</a>
+                    <a href="/activity" class="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md">My Activity</a>
+                    <button onclick="window.location.href='/logout'" class="w-full text-left mt-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-center">Logout</button>
+                <?php else: ?>
+                    <a href="/login" class="block px-3 py-2 text-indigo-600 hover:bg-gray-50 rounded-md">Login</a>
+                    <a href="/register" class="block px-3 py-2 mt-2 text-indigo-600 hover:bg-gray-50 rounded-md">Register</a>
+                <?php endif; ?>
+            </div>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="w-full max-w-7xl px-4">
+    <main class="flex-1 w-full max-w-7xl px-4 pt-6 pb-12">
         <?php if (!empty($_SESSION['flash'])): ?>
             <?php $f = $_SESSION['flash']; unset($_SESSION['flash']); ?>
             <div class="mb-4 md:mb-6 px-4 py-3 md:py-4 rounded-md text-sm md:text-base <?= $f['type'] === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
@@ -60,6 +83,13 @@
 
         <?= $content ?>
     </main>
+
+    <!-- Footer -->
+    <footer class="w-full mt-auto">
+        <div class="max-w-7xl mx-auto px-4 py-6 text-center text-sm text-gray-500">
+            &copy; <?= date('Y') ?> AuthBoard — Built with PHP & Tailwind
+        </div>
+    </footer>
 
     <!-- Edit modal -->
     <div id="editModal" class="fixed inset-0 hidden items-end sm:items-center justify-center z-50 p-4">
@@ -102,6 +132,17 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Mobile nav toggle
+            var mobileBtn = document.getElementById('mobileMenuBtn');
+            var mobileMenu = document.getElementById('mobileMenu');
+            if (mobileBtn && mobileMenu) {
+                mobileBtn.addEventListener('click', function (e) {
+                    var expanded = mobileBtn.getAttribute('aria-expanded') === 'true';
+                    mobileBtn.setAttribute('aria-expanded', (!expanded).toString());
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+
             // ==== EDIT MODAL ====
             var editModal = document.getElementById('editModal');
             var editOverlay = document.getElementById('editModalOverlay');

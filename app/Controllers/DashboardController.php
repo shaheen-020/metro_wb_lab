@@ -15,10 +15,17 @@ class DashboardController extends Controller {
         }
 
         $posts = Post::getAllWithUser();
-
+        $bookmarkedIds = [];
+        if ($user) {
+            $bookmarks = Post::getBookmarks($user['id']);
+            foreach ($bookmarks as $bm) {
+                $bookmarkedIds[] = (int)$bm['id'];
+            }
+        }
         $this->view('dashboard.php', [
             'user' => $user,
-            'posts' => $posts
+            'posts' => $posts,
+            'bookmarkedIds' => $bookmarkedIds
         ]);
     }
 }

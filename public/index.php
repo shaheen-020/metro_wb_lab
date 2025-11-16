@@ -23,6 +23,8 @@ use App\Core\Session;
 use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
 use App\Controllers\PostController;
+use App\Controllers\BookmarkController;
+use App\Controllers\ActivityController;
 
 Session::start();
 
@@ -30,6 +32,8 @@ $router = new Router();
 $auth = new AuthController();
 $dash = new DashboardController();
 $post = new PostController();
+$bookmark = new BookmarkController();
+$activity = new ActivityController();
 
 // ---- Auth Routes ----
 $router->get('/', fn() => $auth->showLogin());
@@ -49,5 +53,13 @@ $router->post('/post/create', fn() => $post->create()); // handles form submissi
 $router->post('/post/delete', fn() => $post->delete());
 // edit post
 $router->post('/post/edit', fn() => $post->edit());
+// ---- Bookmarks ----
+$router->get('/bookmarks', fn() => $bookmark->index());
+$router->post('/bookmark', fn() => $bookmark->bookmark());
+$router->post('/unbookmark', fn() => $bookmark->unbookmark());
+
+// ---- Activity Timeline ----
+$router->get('/activity', fn() => $activity->index());
+
 // ---- Dispatch ----
 $router->dispatch($_SERVER['REQUEST_URI'] ?? '/', $_SERVER['REQUEST_METHOD'] ?? 'GET');

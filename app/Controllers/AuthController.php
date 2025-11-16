@@ -5,6 +5,7 @@ use App\Core\Controller;
 use App\Core\Session;
 use App\Core\Mailer;
 use App\Models\User;
+use App\Models\Activity;
 
 class AuthController extends Controller {
     public function showLogin() {
@@ -46,6 +47,7 @@ class AuthController extends Controller {
         $user = User::findByEmail($email);
         if ($user && password_verify($password, $user['password'])) {
             Session::set('user', ['id' => $user['id'], 'name' => $user['name'], 'email' => $user['email']]);
+            Activity::log($user['id'], 'login', null, 'Logged in');
             header('Location: /dashboard');
             return;
         }
@@ -55,6 +57,10 @@ class AuthController extends Controller {
 
     public function logout(): void
     {
+        $user = Session::get('user');
+        if ($user) {
+            Activity::log($user['id'], 'logout', null, 'Logged out');
+        }
         Session::destroy();
         header('Location: /login');
     }

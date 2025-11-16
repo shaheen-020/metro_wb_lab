@@ -4,6 +4,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Session;
 use App\Models\Post;
+use App\Models\Activity;
 
 class PostController extends Controller {
     public function create(): void
@@ -42,7 +43,10 @@ class PostController extends Controller {
             }
 
             // Create the post
-            Post::create($user['id'], $content, $imagePath);
+            $postId = Post::create($user['id'], $content, $imagePath);
+            
+            // Log activity
+            Activity::log($user['id'], 'create_post', $postId, 'Created a new post');
 
             // Redirect to dashboard
             header('Location: /dashboard');
@@ -96,6 +100,7 @@ class PostController extends Controller {
                 'target' => $target,
             ]);
         } else {
+            Activity::log($user['id'], 'delete_post', $postId, 'Deleted a post');
             Session::set('flash', ['type' => 'success', 'message' => 'Post deleted.']);
             Session::set('debug', [
                 'where' => 'delete_ok',
@@ -142,6 +147,7 @@ class PostController extends Controller {
 
         $ok = Post::update($postId, $user['id'], $content);
         if ($ok) {
+            Activity::log($user['id'], 'edit_post', $postId, 'Edited a post');
             Session::set('flash', ['type' => 'success', 'message' => 'Post updated.']);
             Session::set('debug', ['where' => 'edit_ok', 'postId' => $postId]);
         } else {

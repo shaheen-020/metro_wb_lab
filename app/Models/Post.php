@@ -4,6 +4,31 @@ namespace App\Models;
 use PDO;
 
 class Post {
+    // Bookmark a post for a user
+    public static function bookmark(int $userId, int $postId): bool {
+        $stmt = self::connect()->prepare('INSERT IGNORE INTO bookmarks (user_id, post_id) VALUES (?, ?)');
+        return $stmt->execute([$userId, $postId]);
+    }
+
+    // Remove a bookmark
+    public static function unbookmark(int $userId, int $postId): bool {
+        $stmt = self::connect()->prepare('DELETE FROM bookmarks WHERE user_id = ? AND post_id = ?');
+        return $stmt->execute([$userId, $postId]);
+    }
+
+    // Get all bookmarked posts for a user
+    public static function getBookmarks(int $userId): array {
+        $stmt = self::connect()->prepare('
+            SELECT posts.*, users.name
+            FROM bookmarks
+            JOIN posts ON bookmarks.post_id = posts.id
+            JOIN users ON posts.user_id = users.id
+            WHERE bookmarks.user_id = ?
+            ORDER BY bookmarks.created_at DESC
+        ');
+        $stmt->execute([$userId]);
+        return $stmt->fetchAll();
+    }
     // Private connection method (same pattern as User)
     private static function connect(): PDO {
         $host = getenv('DB_HOST') ?: '127.0.0.1';
@@ -21,12 +46,15 @@ class Post {
     }
 
     // Create a new post
-    public static function create(int $userId, string $content, ?string $image = null): bool {
+    public static function create(int $userId, string $content, ?string $image = null) {
         $stmt = self::connect()->prepare('INSERT INTO posts (user_id, content, image) VALUES (?, ?, ?)');
-        return $stmt->execute([$userId, $content, $image]);
+        if ($stmt->execute([$userId, $content, $image])) {
+            return (int)self::connect()->lastInsertId();
+        }
+        return false;
     }
 
-    // Fetch all posts with user info (newest first)
+    // Fetch all posts with user info 
     public static function getAllWithUser(): array {
         $stmt = self::connect()->query('
             SELECT posts.*, users.name 
@@ -37,7 +65,7 @@ class Post {
         return $stmt->fetchAll();
     }
 
-    // Fetch all posts by a specific user (optional)
+    // Fetch all posts by a specific user 
     public static function getByUser(int $userId): array {
         
         $stmt = self::connect()->prepare('
